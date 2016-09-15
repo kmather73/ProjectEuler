@@ -8,7 +8,10 @@ Created on Sun Sep 11 16:29:55 2016
 from fractions import gcd
 from functools import reduce
 from collections import defaultdict
+from math import factorial
+from math import sqrt
 import random
+import string
  
 #------------------------------------------------------------------------------
 # Number Theory functions
@@ -27,8 +30,18 @@ def gcdd(args):
 	return reduce(gcd, args)
 
 
+def nCk(n,k):
+    return factorial(n)/(factorial(k)*factorial(n-k))
 
 
+def pentagonalNum(n):
+    """Compute the nth Pentagonal number"""
+    return n*(3*n-1)/2
+    
+def hexagonalNum(n):
+    """Compute the nth Hexagonal number"""
+    return n*(2*n-1)
+    
 def sumOfSquares(n):
     """Compute the sum of squares of the first n integers"""
     return n*(n+1)*(2*n+1)/6
@@ -142,7 +155,11 @@ def factorize(n, _d={0: [], 1: [], 2: [2]}):
     return factors
 
 
-
+def PythagoreanTripls(u,v):
+    if v > u:
+        u, v = v, u
+    return [2*u*v, u**2 - v**2, u**2+v**2]
+    
 def sigma0(n):
     l = factorize(n)
     m = defaultdict(int)
@@ -153,7 +170,17 @@ def sigma0(n):
     for k in m:
         sigma *= (1+m[k])
     return sigma
-        
+
+def sigma1(n):
+    tSum = 0
+    for i in range(1, int(sqrt(n)+1)):
+        if n%i == 0:
+            tSum += (i + (n/i))
+            
+    if n == int(sqrt(n))**2:
+        tSum -= int(sqrt(n))
+    return tSum
+               
 def generateFactors(n, primes, start=1, factors=(), genOne=False):
     '''This generates all numbers between from 1 up to n as their list of factors'''
     if genOne:
@@ -170,3 +197,20 @@ def generateFactors(n, primes, start=1, factors=(), genOne=False):
 def palindrome(n):
     """Determines if a number is a palindrone"""
     return (str(n))[::-1] == str(n)
+
+
+    
+digs = string.digits + string.letters
+def int2base(x, base):
+  if x < 0: sign = -1
+  elif x == 0: return digs[0]
+  else: sign = 1
+  x *= sign
+  digits = []
+  while x:
+    digits.append(digs[x % base])
+    x /= base
+  if sign < 0:
+    digits.append('-')
+  digits.reverse()
+  return ''.join(digits)
