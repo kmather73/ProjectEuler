@@ -10,6 +10,8 @@ from functools import reduce
 from collections import defaultdict
 from math import factorial
 from math import sqrt
+from math import exp
+from math import log
 import random
 import string
  
@@ -34,6 +36,10 @@ def nCk(n,k):
     return factorial(n)/(factorial(k)*factorial(n-k))
 
 
+def genPentagonalNum(n):
+    """Compute the nth Pentagonal number"""
+    return n*(3*n-1)/2 + (1-n)*(3*(1-n)-1)/2
+    
 def pentagonalNum(n):
     """Compute the nth Pentagonal number"""
     return n*(3*n-1)/2
@@ -89,9 +95,44 @@ def isPrime(n, _precision_for_huge_n=16):
     return not any(_try_composite(a, d, n, s)
                    for a in _known_primes[:_precision_for_huge_n])
 
-_known_primes = [2, 3]
-_known_primes += [x for x in range(5, 1000, 2) if isPrime(x)]
-  
+def sieveAndPhi(n):
+    s = [False] * (n + 1)
+    phi = [0]*(n + 1)
+    primes = []
+    phi[1] = 1
+    
+    for i in range(2, n):
+        if not s[i]:
+            phi[i] = i-1
+            primes.append(i)
+        
+        
+        j = 0
+        while j < len(primes) and primes[j]*i < n:
+            s[primes[j]*i] = True
+            
+            if i % primes[j] == 0:
+                ppow = 1
+                num = i
+                while num%primes[j] == 0:
+                    ppow *= primes[j]
+                    num /= primes[j]
+                    
+                phi[int(i*primes[j])] = phi[int(num)] * ppow * (primes[j] - 1)
+                break
+            else:
+                phi[i*primes[j]] = phi[i]*(primes[j]-1)
+            
+            j += 1
+            
+    return primes, phi
+    
+#_known_primes = [2, 3]
+#_known_primes += set([x for x in range(5, 50000, 2) if isPrime(x)])
+_tblSize = 10**6
+_known_primesList, _phi = sieveAndPhi(_tblSize)
+_known_primes = set(_known_primesList)
+
 def brentFactorisation(n): 
     """Try to find a non-trival factor of n"""
     # http://maths-people.anu.edu.au/~brent/pd/rpb051i.pdf
@@ -154,7 +195,21 @@ def factorize(n, _d={0: [], 1: [], 2: [2]}):
     _d[args] = factors
     return factors
 
+def phi(n):
+    '''Returns the euler totient of an integer'''
+    # This pure integer solution avoids the loss of precison that comes with
+    # dealing 1/p
+    if n < _tblSize:
+        return _phi[n]
+        
+    primes = factorize(n)
+    n = 1
+    for p in set(primes):
+        n *= p ** (primes.count(p) - 1) * (p - 1)
+    return n
+    
 
+    
 def PythagoreanTripls(u,v):
     if v > u:
         u, v = v, u
@@ -180,9 +235,36 @@ def sigma1(n):
     if n == int(sqrt(n))**2:
         tSum -= int(sqrt(n))
     return tSum
+    
+def sigmaK2(n,k):
+    sigma = 1
+    
+    i = 0
+    while n >= _known_primesList[i]:
+        x = _known_primesList[i]**k        
+        j = 1
+        tSum = 1
+        while n%_known_primesList[i] == 0:
+            n /= _known_primesList[i]            
+            j *= x
+            tSum += j
+        sigma *= tSum
+        i += 1
+    return sigma
+    
+def sigmaK(n, k):
+    l = factorize(n)
+    m = defaultdict(int)
+    for x in l:
+        m[x] += 1
+    
+    sigma = 1      
+    for x in m:
+        sigma *= (x**(k*(m[x]+1))-1)/(x**k-1)
+    return sigma
                
 def generateFactors(n, primes, start=1, factors=(), genOne=False):
-    '''This generates all numbers between from 1 up to n as their list of factors'''
+    '''This generates a list of all factors of n with numbers between 1 and n'''
     if genOne:
         yield (1,)
     if start <= n:
@@ -200,7 +282,7 @@ def palindrome(n):
 
 
     
-digs = string.digits + string.letters
+digs = string.digits + string.ascii_letters
 def int2base(x, base):
   if x < 0: sign = -1
   elif x == 0: return digs[0]
@@ -214,3 +296,43 @@ def int2base(x, base):
     digits.append('-')
   digits.reverse()
   return ''.join(digits)
+  
+  
+  
+def validPair(i,j, primes):
+    return isPrime(int(str(primes[i])+str(primes[j]))) and isPrime(int(str(primes[j])+str(primes[i])))
+
+def Q60(limit):
+    primes = []
+    i = 2
+    
+    while len(primes) < limit:
+        if isPrime(i):                                     
+            primes.append(i)
+        i += 1        
+        
+    n = len(primes)
+    for i1 in range(n):
+        for i2 in range(i1+1, n):
+            if validPair(i1, i2, primes):
+                for i3 in range(i2+1, n):
+                    if validPair(i1, i3, primes) and validPair(i2, i3, primes):
+                        for i4 in range(i3+1, n):
+                            if validPair(i1, i4, primes) and validPair(i2, i4, primes) and validPair(i3, i4, primes):
+                                for i5 in range(i4+1, n):
+                                    if validPair(i1, i5, primes) and validPair(i2, i5, primes) and validPair(i3, i5, primes) and validPair(i4, i5, primes):
+                                        print( sum([primes[x] for x in [i1, i2, i3, i4, i5]]))
+                                        
+                                        
+#------------------------------------------------------------------------------
+# Preprocessing functions
+#------------------------------------------------------------------------------
+def readCSVGrid(path):
+    grid = []
+    with open(path, "r") as f:
+        for line in f:
+            grid.append([])
+            for num in line.split(","):
+                grid[-1].append(int(num))
+                
+    return grid
