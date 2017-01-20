@@ -127,6 +127,21 @@ def sieveAndPhi(n):
             
     return primes, phi
     
+def sieve(n):
+    s = [False] * (n + 1)
+    primes = []
+    
+    for i in range(2, n):
+        if not s[i]:
+            primes.append(i)
+        
+        
+        j = 0
+        while j < len(primes) and primes[j]*i < n:
+            s[primes[j]*i] = True
+            j += 1
+            
+    return primes
 #_known_primes = [2, 3]
 #_known_primes += set([x for x in range(5, 50000, 2) if isPrime(x)])
 _tblSize = 10**6
@@ -262,7 +277,15 @@ def sigmaK(n, k):
     for x in m:
         sigma *= (x**(k*(m[x]+1))-1)/(x**k-1)
     return sigma
-               
+  
+def sumOfDigits(num , k):
+    num = str(num)
+    powSum = 0
+
+    for ch in num:
+        powSum += int(ch)**k
+    return powSum
+
 def generateFactors(n, primes, start=1, factors=(), genOne=False):
     '''This generates a list of all factors of n with numbers between 1 and n'''
     if genOne:
